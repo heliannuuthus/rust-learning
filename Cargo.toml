@@ -12,3 +12,9 @@ edition = "2021"
 name = "01-casting"
 [[example]]
 name = "02-literals"
+[[example]]
+name = "03-conversion"
+[[example]]
+name = "04-function"
+[[example]]
+name = "05-closure"
