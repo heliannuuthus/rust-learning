@@ -21,6 +21,21 @@
 ///   但是不可复制的类型将 move 到闭包内
 ///
 /// > 在闭包 `||` 之前使用 move 关键字会将闭包捕获的变量所有权强制转移到闭包内
+///
+/// ### as input parameters
+///
+/// rust 拥有强大的隐式类型推断，但是在编写 Fn 时这种不定义变量具体类型的行为是不被允许的。
+///
+/// > 当以闭包作为参数时，必须指出闭包的完整类型。并且以以下类型作为入参类型：
+/// - Fn 表示仅 capturing &T
+/// - FnMut 表示 capturing &mut T
+/// - FnOnce 表示 capturing T
+/// 以上顺序层层递进，不可变引用 -> 可变引用 -> 所有权
+///
+/// 注意：rust 的编译器对这块会有优化，编译器会满足入参需求的同时优先选择限制最多的一个进行优化
+/// 例如，定义一个 FnOnce 但是此内仅仅只使用了 &T 和 &mut T ，此时就会优化成 FnMut
+///
+///
 
 fn main() {
     fn function(num: u32) -> u32 {
@@ -36,7 +51,52 @@ fn main() {
 
     let return1 = || 1;
     println!("closure just return 1 execute: {}", return1());
+    capturing();
+    as_input_params();
+}
+fn apply<F>(f: F)
+where
+    F: FnOnce(),
+{
+    f();
+}
 
+fn apply_to_3<F>(f: F) -> u32
+where
+    F: Fn(u32) -> u32,
+{
+    f(3)
+}
+
+fn as_input_params() {
+    //定义两个变量
+    let chater = "chater";
+
+    let mut good = "good".to_owned();
+
+    let test_clousure = || {
+        // 将该作用域下一行以下的代码注释，vscode 的代码类型标注会先表示当前闭包类型为 Fn，当前仅使用了 &T
+        println!("just print chater: {:?}", chater);
+
+        // 将该作用域下一行以下的代码注释，vscode 的代码类型标注会先表示当前闭包类型为 FnMut，因为 push_str 会使用 &mut T
+        good.push_str("change");
+
+        println!("just look at good change: {:?}", good);
+
+        // 此行代码不注释表示该闭包内使用了外部的 owner 所以会升级为 FnOnce
+        std::mem::drop(good);
+    };
+    apply(test_clousure);
+
+    let double = |x| x * 2;
+
+    println!(
+        "check double with apply_to_3 equals 6: {:?}",
+        apply_to_3(double)
+    )
+}
+
+fn capturing() {
     // 一、capturing
 
     let color = String::from("red");
@@ -81,10 +141,12 @@ fn main() {
     // consume();
 
     // 添加 move 关键字，将所有权强制转移到闭包内
-    let mut haystack = vec![1, 2, 3];
+    let mut haystack: Vec<i32> = vec![1, 2];
+    haystack.push(3);
     let contains = move |needle| haystack.contains(needle);
     println!("{}", contains(&1));
     println!("{}", contains(&4));
+    println!("{}", contains(&3));
     // move 到 contains 内了
     // let mut_haystack = haystack.as_mut_slice();
 }
