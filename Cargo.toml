@@ -6,15 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+tokio = { version = "1", features = ["full"] }
 
-
-[[example]]
-name = "01-casting"
-[[example]]
-name = "02-literals"
-[[example]]
-name = "03-conversion"
-[[example]]
-name = "04-function"
-[[example]]
-name = "05-closure"
+[examples]
+example1 = { path = "tokio/main.rs" }
